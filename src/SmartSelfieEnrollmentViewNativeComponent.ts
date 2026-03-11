@@ -7,6 +7,14 @@ export type SmartSelfieEnrollSuccessEvent = Readonly<{ result: string }>;
 export type SmartSelfieEnrollErrorEvent = Readonly<{ error: string }>;
 
 interface NativeProps extends ViewProps {
+  // ✅ Added missing props so Fabric passes them to Native
+  userId?: string;
+  jobId?: string;
+  allowAgentMode?: boolean;
+  showAttribution?: boolean;
+  showInstructions?: boolean;
+  skipApiSubmission?: boolean;
+
   onSuccess?: DirectEventHandler<SmartSelfieEnrollSuccessEvent>;
   onError?: DirectEventHandler<SmartSelfieEnrollErrorEvent>;
 }
