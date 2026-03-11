@@ -6,9 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.AbstractComposeView
-import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.events.RCTEventEmitter
@@ -28,29 +26,30 @@ class SmartSelfieEnrollmentView(context: Context) : AbstractComposeView(context)
 
   @Composable
   override fun Content() {
-    // ❌ REMOVED RANDOM DEFAULTS. 
-    // If props are null, these variables will simply be null.
-    Log.d("SmileID_Native", "🎨 Rendering Content. Active userId: '$userId', Active jobId: '$jobId'")
+    Log.d("SmileID_Native", "Rendering. Active userId: '$userId', Active jobId: '$jobId'")
 
     SmartSelfieEnrollmentRootView(
-      userId = userId, // Pass null directly if not set
+      userId = userId,
       jobId = jobId,
       allowAgentMode = allowAgentMode,
       showAttribution = showAttribution,
       showInstructions = showInstructions,
-      onResult = { result ->
-        val params = Arguments.createMap().apply { putString("result", result.selfieFile.absolutePath) }
-        sendEvent("topSuccess", params)
+      onResult = { result: SmartSelfieResult ->
+        dispatchDirectEvent(eventPropName = "onSuccess", payload = result.toWritableMap())
       },
-      onError = { error ->
-        val params = Arguments.createMap().apply { putString("error", error.message) }
-        sendEvent("topError", params)
+      onError = { throwable: Throwable ->
+        dispatchDirectEvent(eventPropName = "onError", payload = throwable.toSmartSelfieErrorPayload())
       }
     )
   }
 
-  private fun sendEvent(eventName: String, params: WritableMap) {
+  private fun dispatchDirectEvent(eventPropName: String, payload: WritableMap) {
+    val eventName = when (eventPropName) {
+      "onSuccess" -> "topSuccess"
+      "onError" -> "topError"
+      else -> eventPropName
+    }
     val reactContext = context as? ReactContext
-    reactContext?.getJSModule(RCTEventEmitter::class.java)?.receiveEvent(id, eventName, params)
+    reactContext?.getJSModule(RCTEventEmitter::class.java)?.receiveEvent(id, eventName, payload)
   }
 }
