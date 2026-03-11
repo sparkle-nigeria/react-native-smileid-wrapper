@@ -75,7 +75,7 @@ export default function App(): React.JSX.Element {
         };
         // await initialize(false, false, config, "your_api_key");
         // await initialize(false, false, config); // Uncomment this when testing iOS
-        await initialize(false, false); // use this for Android - with your smile_id config in asset folder
+        // await initialize(false, false); // use this for Android - with your smile_id config in asset folder
         console.log('[SmileID] SDK initialized');
         // Optionally set a callback URL if needed:
         // await setCallbackUrl('https://your.server/callback');
