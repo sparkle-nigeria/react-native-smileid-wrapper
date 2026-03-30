@@ -2,19 +2,60 @@ import SwiftUI
 import SmileID
 
 struct SmartSelfieAuthenticationRootView: View, SmartSelfieResultDelegate {
+  let userId: String
+  let jobId: String
+  let allowAgentMode: Bool
+  let showAttribution: Bool
+  let showInstructions: Bool
+  let skipApiSubmission: Bool
+  let extraPartnerParams: [String: String]
   let onSuccess: (NSString) -> Void
   let onError: (NSString) -> Void
 
   init(
+    userId: String = "",
+    jobId: String = "",
+    allowAgentMode: Bool = false,
+    showAttribution: Bool = true,
+    showInstructions: Bool = true,
+    skipApiSubmission: Bool = false,
+    extraPartnerParams: [String: String] = [:],
     onSuccess: @escaping (NSString) -> Void = { _ in },
     onError: @escaping (NSString) -> Void = { _ in }
   ) {
+    self.userId = userId
+    self.jobId = jobId
+    self.allowAgentMode = allowAgentMode
+    self.showAttribution = showAttribution
+    self.showInstructions = showInstructions
+    self.skipApiSubmission = skipApiSubmission
+    self.extraPartnerParams = extraPartnerParams
     self.onSuccess = onSuccess
     self.onError = onError
+
+    print("📸 [SmileID Auth View] init - userId: \(userId), jobId: \(jobId)")
   }
 
   var body: some View {
-    SmileID.smartSelfieAuthenticationScreen(userId: "userID", delegate: self)
+    if userId.isEmpty {
+      ProgressView("Loading...")
+        .onAppear {
+          print("📸 [SmileID Auth View] ⚠️ userId is empty, showing loader")
+        }
+    } else {
+      let _ = print("📸 [SmileID Auth View] Rendering - userId: \(userId), jobId: \(jobId)")
+
+      SmileID.smartSelfieAuthenticationScreen(
+        userId: userId,
+        jobId: jobId,
+        allowAgentMode: allowAgentMode,
+        showAttribution: showAttribution,
+        showInstructions: showInstructions,
+        skipApiSubmission: skipApiSubmission,
+        extraPartnerParams: extraPartnerParams,
+        delegate: self
+      )
+    }
   }
 
   func didSucceed(
@@ -22,57 +63,30 @@ struct SmartSelfieAuthenticationRootView: View, SmartSelfieResultDelegate {
     livenessImages: [URL],
     apiResponse: SmartSelfieResponse?
   ) {
-    var params: [String: Any] = [
-              "selfieFile": selfieImage.absoluteString,
-                "livenessFiles": livenessImages.map {
-                    $0.absoluteString
-                },
-            ]
-            if let apiResponse = apiResponse {
-                params["apiResponse"] = apiResponse
-            }
+    print("📸 [SmileID Auth View] ✅ Success - userId: \(userId)")
 
-            guard let jsonData = try? JSONSerialization.data(withJSONObject: params.toJSONCompatibleDictionary(), options: .prettyPrinted) else {
-              onError("Error converting to JSON")
-                return
-            }
-    onSuccess(String(data: jsonData, encoding: .utf8)! as NSString)
+    var result: [String: Any] = [
+      "selfieFile": selfieImage.absoluteString,
+      "livenessFiles": livenessImages.map { $0.absoluteString },
+    ]
+
+    if let response = apiResponse,
+       let responseData = try? JSONEncoder().encode(response),
+       let responseDict = try? JSONSerialization.jsonObject(with: responseData) {
+      result["apiResponse"] = responseDict
+    }
+
+    guard let jsonData = try? JSONSerialization.data(withJSONObject: result),
+          let jsonString = String(data: jsonData, encoding: .utf8) else {
+      onError("Error converting result to JSON" as NSString)
+      return
+    }
+
+    onSuccess(jsonString as NSString)
   }
 
   func didError(error: Error) {
+    print("📸 [SmileID Auth View] ❌ Error: \(error.localizedDescription)")
     onError(error.localizedDescription as NSString)
   }
 }
-
-
-extension Dictionary where Key == String, Value == Any {
-  func toJSONCompatibleDictionary() -> [String: Any] {
-    var jsonCompatibleDict = [String: Any]()
-    for (key, value) in self {
-      if let arrayValue = value as? [Any] {
-        jsonCompatibleDict[key] = arrayValue.map { convertToJSONCompatible($0) }
-      } else {
-        jsonCompatibleDict[key] = convertToJSONCompatible(value)
-      }
-    }
-    return jsonCompatibleDict
-  }
-}
-  
-  private func convertToJSONCompatible(_ value: Any) -> Any {
-    switch value {
-    case let url as URL:
-      return url.absoluteString
-    case let bool as Bool:
-      return bool
-    case let string as String:
-      return string
-    case let number as NSNumber:
-      return number
-    case let dict as [String: Any]:
-      return dict.toJSONCompatibleDictionary()
-    default:
-      return String(describing: value)
-    }
-  }
-

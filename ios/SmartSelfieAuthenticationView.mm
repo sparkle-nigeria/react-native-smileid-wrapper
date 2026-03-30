@@ -36,7 +36,13 @@ using namespace facebook::react;
     static const auto defaultProps = std::make_shared<const SmartSelfieAuthenticationViewProps>();
     _props = defaultProps;
 
-  _provider = [[SmartSelfieAuthenticationViewProvider alloc] init];
+    _provider = [[SmartSelfieAuthenticationViewProvider alloc] init];
+
+    if (!_provider) {
+      NSLog(@"📸 [SmileID Auth ObjC] ⚠️ Failed to create provider");
+      return self;
+    }
+
     self.contentView = _provider;
 
     __weak SmartSelfieAuthenticationView *weakSelf = self;
@@ -59,6 +65,30 @@ using namespace facebook::react;
     };
   }
   return self;
+}
+
+- (void)updateProps:(const Props::Shared &)props oldProps:(const Props::Shared &)oldProps
+{
+  const auto &newViewProps = *std::static_pointer_cast<const SmartSelfieAuthenticationViewProps>(props);
+
+  NSLog(@"📸 [SmileID Auth ObjC] updateProps called - userId: %s, jobId: %s",
+    newViewProps.userId.c_str(), newViewProps.jobId.c_str());
+
+  // Call super FIRST
+  [super updateProps:props oldProps:oldProps];
+
+  // Set all props on the provider
+  _provider.userId = [NSString stringWithUTF8String:newViewProps.userId.c_str()];
+  _provider.jobId = [NSString stringWithUTF8String:newViewProps.jobId.c_str()];
+  _provider.allowAgentMode = newViewProps.allowAgentMode;
+  _provider.showAttribution = newViewProps.showAttribution;
+  _provider.showInstructions = newViewProps.showInstructions;
+  _provider.skipApiSubmission = newViewProps.skipApiSubmission;
+
+  NSLog(@"📸 [SmileID Auth ObjC] Set userId: %@, jobId: %@", _provider.userId, _provider.jobId);
+
+  // Build view AFTER all props are set
+  [_provider buildView];
 }
 
 @end

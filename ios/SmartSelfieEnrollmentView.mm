@@ -61,5 +61,34 @@ using namespace facebook::react;
   return self;
 }
 
+- (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &)oldProps
+{
+  const auto &newViewProps = *std::static_pointer_cast<SmartSelfieEnrollmentViewProps const>(props);
+
+  NSLog(@"📸 [SmileID ObjC] updateProps - userId: %s, jobId: %s",
+    newViewProps.userId.c_str(), newViewProps.jobId.c_str());
+
+  [super updateProps:props oldProps:oldProps];
+
+  _provider.userId = [NSString stringWithUTF8String:newViewProps.userId.c_str()];
+  _provider.jobId = [NSString stringWithUTF8String:newViewProps.jobId.c_str()];
+  _provider.allowAgentMode = newViewProps.allowAgentMode;
+  _provider.showAttribution = newViewProps.showAttribution;
+  _provider.showInstructions = newViewProps.showInstructions;
+  _provider.skipApiSubmission = newViewProps.skipApiSubmission;
+  _provider.extraPartnerParams = [NSString stringWithUTF8String:newViewProps.extraPartnerParams.c_str()];
+
+  NSLog(@"📸 [SmileID ObjC] Set userId: %@, jobId: %@, extraPartnerParams: %@",
+    _provider.userId, _provider.jobId, _provider.extraPartnerParams);
+
+  [_provider buildView];
+}
+
 @end
+
+Class<RCTComponentViewProtocol> SmartSelfieEnrollmentViewCls(void)
+{
+  return SmartSelfieEnrollmentView.class;
+}
+
 #endif
