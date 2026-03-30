@@ -84,8 +84,10 @@ using namespace facebook::react;
   _provider.showAttribution = newViewProps.showAttribution;
   _provider.showInstructions = newViewProps.showInstructions;
   _provider.skipApiSubmission = newViewProps.skipApiSubmission;
+  _provider.extraPartnerParams = [NSString stringWithUTF8String:newViewProps.extraPartnerParams.c_str()];
 
-  NSLog(@"📸 [SmileID Auth ObjC] Set userId: %@, jobId: %@", _provider.userId, _provider.jobId);
+  NSLog(@"📸 [SmileID Auth ObjC] Set userId: %@, jobId: %@, extraPartnerParams: %@",
+    _provider.userId, _provider.jobId, _provider.extraPartnerParams);
 
   // Build view AFTER all props are set
   [_provider buildView];
