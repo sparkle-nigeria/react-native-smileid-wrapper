@@ -14,6 +14,7 @@ interface NativeProps extends ViewProps {
   showAttribution?: boolean;
   showInstructions?: boolean;
   skipApiSubmission?: boolean;
+  extraPartnerParams?: string;
 
   onSuccess?: DirectEventHandler<SmartSelfieEnrollSuccessEvent>;
   onError?: DirectEventHandler<SmartSelfieEnrollErrorEvent>;

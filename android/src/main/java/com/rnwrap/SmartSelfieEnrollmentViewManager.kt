@@ -8,13 +8,15 @@ import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.viewmanagers.SmartSelfieEnrollmentViewManagerDelegate
 import com.facebook.react.viewmanagers.SmartSelfieEnrollmentViewManagerInterface
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableMap
+import org.json.JSONObject
 
 @ReactModule(name = SmartSelfieEnrollmentViewManager.REACT_CLASS)
-class SmartSelfieEnrollmentViewManager : SimpleViewManager<SmartSelfieEnrollmentView>(), 
+class SmartSelfieEnrollmentViewManager : SimpleViewManager<SmartSelfieEnrollmentView>(),
     SmartSelfieEnrollmentViewManagerInterface<SmartSelfieEnrollmentView> {
 
-  // 🔴 REQUIRED FOR FABRIC (NEW ARCHITECTURE)
-  private val delegate: ViewManagerDelegate<SmartSelfieEnrollmentView> = 
+  private val delegate: ViewManagerDelegate<SmartSelfieEnrollmentView> =
       SmartSelfieEnrollmentViewManagerDelegate(this)
 
   override fun getDelegate(): ViewManagerDelegate<SmartSelfieEnrollmentView> = delegate
@@ -24,9 +26,6 @@ class SmartSelfieEnrollmentViewManager : SimpleViewManager<SmartSelfieEnrollment
   override fun createViewInstance(context: ThemedReactContext): SmartSelfieEnrollmentView {
     return SmartSelfieEnrollmentView(context)
   }
-
-  // 🔵 Override Interface Methods for Fabric
-  // These handle the prop updates from the New Architecture
 
   @ReactProp(name = "userId")
   override fun setUserId(view: SmartSelfieEnrollmentView, value: String?) {
@@ -54,10 +53,28 @@ class SmartSelfieEnrollmentViewManager : SimpleViewManager<SmartSelfieEnrollment
   override fun setShowInstructions(view: SmartSelfieEnrollmentView, value: Boolean) {
     view.showInstructions = value
   }
-  
-  // Stubs for interface method we might not use yet but must implement to satisfy the interface
+
+  @ReactProp(name = "skipApiSubmission")
   override fun setSkipApiSubmission(view: SmartSelfieEnrollmentView, value: Boolean) {
-      // Implement if needed
+    view.skipApiSubmission = value
+  }
+
+  @ReactProp(name = "extraPartnerParams")
+  override fun setExtraPartnerParams(view: SmartSelfieEnrollmentView, value: String?) {
+    Log.d("SmileID_Native", "🔵 setExtraPartnerParams called with: '$value'")
+    if (value != null) {
+      try {
+        val json = JSONObject(value)
+        val map = mutableMapOf<String, String>()
+        json.keys().forEach { key -> map[key] = json.getString(key) }
+        view.extraPartnerParams = map.toImmutableMap()
+      } catch (e: Exception) {
+        Log.e("SmileID_Native", "Failed to parse extraPartnerParams: $value", e)
+        view.extraPartnerParams = persistentMapOf()
+      }
+    } else {
+      view.extraPartnerParams = persistentMapOf()
+    }
   }
 
   override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any> {

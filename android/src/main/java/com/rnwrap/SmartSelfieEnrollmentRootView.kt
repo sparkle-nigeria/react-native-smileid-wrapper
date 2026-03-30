@@ -12,6 +12,8 @@ import com.smileidentity.SmileID
 import com.smileidentity.compose.SmartSelfieEnrollment
 import com.smileidentity.results.SmartSelfieResult
 import com.smileidentity.results.SmileIDResult
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentMapOf
 
 @Composable
 fun SmartSelfieEnrollmentRootView(
@@ -20,6 +22,8 @@ fun SmartSelfieEnrollmentRootView(
   allowAgentMode: Boolean,
   showAttribution: Boolean,
   showInstructions: Boolean,
+  skipApiSubmission: Boolean = false,
+  extraPartnerParams: ImmutableMap<String, String> = persistentMapOf(),
   onResult: (SmartSelfieResult) -> Unit,
   onError: (Throwable) -> Unit
 ) {
@@ -39,17 +43,18 @@ fun SmartSelfieEnrollmentRootView(
           jobId = jobId,
           allowAgentMode = allowAgentMode,
           showAttribution = showAttribution,
-          showInstructions = showInstructions
+          showInstructions = showInstructions,
+          skipApiSubmission = skipApiSubmission,
+          extraPartnerParams = extraPartnerParams,
         ) { result ->
           when (result) {
-            // Fix: Use <SmartSelfieResult> to handle generics correctly
             is SmileIDResult.Success<SmartSelfieResult> -> {
               Log.e("SmileID_Native", "✅ SmartSelfie Success! File: ${result.data.selfieFile.absolutePath}")
               onResult(result.data)
             }
             is SmileIDResult.Error -> {
-               Log.e("SmileID_Native", "❌ SmartSelfie Error: ${result.throwable.message}")
-               onError(result.throwable)
+              Log.e("SmileID_Native", "❌ SmartSelfie Error: ${result.throwable.message}")
+              onError(result.throwable)
             }
           }
         }
